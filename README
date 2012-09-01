@@ -1,2 +1,29 @@
-The main purpose of the czio project is to make an easy API to handle 
-ZIO devices 
+The main purpose of the libzio library is to make an easy API to handle
+ZIO devices. The libzio library is made of the following files:
+- libzattr.c
+- libzio.c
+
+
+libzattr.c --------------------------------------------------------------------
+Within this file there are the function to read and write ZIO attributes.
+
+	int zio_read_attribute(char *path, uint32_t *value);
+	int zio_write_attribute(char *path, uint32_t value);
+	inline int zio_read_control(char *path, struct zio_control *ctrl);
+	inline int zio_write_control(char *path, struct zio_control *ctrl);
+
+When you use these functions your program open the sysfs file, perform the I/O
+on file and then it closes the sysfs file. You can use these function to
+read/write from any sysfs attribute.
+
+Two special functions are used to read/write the sysfs binary attribute
+current_control. These two function can be used both to read the current_control
+attribute, and the control char device from the cdev interface. If you need a
+complex management of the cdev control do _not_ use these functions. For example
+if you need to use select() or poll() you must handle the char device
+differently because these function are really simple and they just open
+read/write and close the file; while select() and poll() require opened files.
+
+All these function accept two argument: the full path to the sysfs attribute (or
+in particular cases the cdev control char device), and the element to
+read/write through the attribute.
