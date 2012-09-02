@@ -12,6 +12,6 @@ libsysfs.o: libsysfs.c libsysfs.h
 	gcc -c -o "$@" "$<"
 	
 clean:
-	rm $(OBJ)
+	rm $(OBJ) libzio.a
 
 .PHONY: clean
