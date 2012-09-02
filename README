@@ -18,25 +18,23 @@ sysfs structure from a root directory. This is useful for ZIO because:
 
 
 libzattr.c --------------------------------------------------------------------
-Within this file there are the function to read and write ZIO attributes.
+Within this file there are the function to read and write ZIO attributes. All
+these function accept two argument: the sysfs attribute wich represent the
+ZIO attribute, and the element to read/write through the attribute.
 
-	int zio_read_attribute(char *path, uint32_t *value);
-	int zio_write_attribute(char *path, uint32_t value);
-	inline int zio_read_control(char *path, struct zio_control *ctrl);
-	inline int zio_write_control(char *path, struct zio_control *ctrl);
+	int zio_read_attribute(struct sysfs_attr *attr, uint32_t *value)
+	int zio_write_attribute(struct sysfs_attr *attr, uint32_t value)
 
-When you use these functions your program open the sysfs file, perform the I/O
-on file and then it closes the sysfs file. You can use these function to
-read/write from any sysfs attribute.
+When you use these functions you can read or write on a ZIO sysfs attribute.
 
-Two special functions are used to read/write the sysfs binary attribute
-current_control. These two function can be used both to read the current_control
-attribute, and the control char device from the cdev interface. If you need a
-complex management of the cdev control do _not_ use these functions. For example
-if you need to use select() or poll() you must handle the char device
-differently because these function are really simple and they just open
-read/write and close the file; while select() and poll() require opened files.
+	int zio_read_control(struct sysfs_attr *attr, struct zio_control *ctrl)
+	int zio_write_control(struct sysfs_attr *attr, struct zio_control *ctrl)
 
-All these function accept two argument: the full path to the sysfs attribute (or
-in particular cases the cdev control char device), and the element to
-read/write through the attribute.
+When you use these functions you can read or write on a current_control
+attribute.
+
+	int zio_get_module(struct sysfs_attr *attr, char *name)
+	int zio_set_module(struct sysfs_attr *attr, char *name)
+
+When you use these functions you can configure the module to use for your
+buffer, trigger or interface.

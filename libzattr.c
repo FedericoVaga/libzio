@@ -12,85 +12,53 @@
 #include <linux/zio-user.h>
 
 #include "libzio.h"
-
-/*
- * These function is used to read/write from a ZIO attribute. It can be used
- * both to read normal and binary sysfs attributes. The function return 0 on
- * success or a negative error if it fail.
- *
- * @fullpath: full path to the sysfs attribute
- * @flags: the flags to use to open the file
- * @buf: buffer to write or read (it depends on flags)
- * @len: buffer size in bytes
- */
-static int __zio_rw_attribute(char *fullpath, int flags, void *buf, size_t len)
-{
-	int fd, i, err;
-
-	/* Open the sysfs attribute */
-	fd = open(fullpath, flags);
-	if (fd < 0) {
-		fprintf(stderr, "%s: %s\n", fullpath, strerror(errno));
-		return -ENOENT;
-	}
-	/* Sysfs file I/O */
-	if (flags == O_WRONLY)
-		i = write(fd, buf, strlen(buf));
-	else
-		i = read(fd, buf, len);
-	/* Close the sysfs attribute */
-	close(fd);
-
-	return (i < 0 ? i : 0);
-}
-
+#include "libsysfs.h"
 
 #define ZATTR_BUF_LEN 50
 
 /* The function read the value of the ZIO sysfs attribute */
-int zio_read_attribute(char *path, uint32_t *value)
+int zio_read_attribute(struct sysfs_attr *attr, uint32_t *value)
 {
 	char buf[ZATTR_BUF_LEN];
-	int err;
+	int i;
 
+	i = sysfs_read_attribute(attr, buf, ZATTR_BUF_LEN);
 	/* Read attribute */
-	err = __zio_rw_attribute(path, O_RDONLY, buf, ZATTR_BUF_LEN);
-	if (err)
-		return err;
-
+	if (i <=0 )
+		return -1;
 	/* Convert an ASCII string to long */
-	*value = (uint32_t)strtol(buf, NULL, 0);
+	sscanf(buf, "%i", value);
 
 	return 0;
 }
 /* Set the value to the zio attribute */
-int zio_write_attribute(char *path, uint32_t value)
+int zio_write_attribute(struct sysfs_attr *attr, uint32_t value)
 {
 	char buf[ZATTR_BUF_LEN];
-	int err;
+	int i;
 
 	/* Convert the value to an ASCII string */
 	sprintf(buf, "%d", value);
 	/* Write attribute */
-	err = __zio_rw_attribute(path, O_WRONLY, buf, ZATTR_BUF_LEN);
-	if (err)
-		return err;
+	i = sysfs_write_attribute(attr, buf, ZATTR_BUF_LEN);
+	if (i)
+		return -1;
 
 	return 0;
 }
 
-/*
- * The following functions can be used both to read the current_contorl
- * attribute within each channel, and the control char device from the cdev
- * interface. If you need a complex management of the cdev control do not use
- * these functions; for example if you need to use select() or poll() you must
- * handle the char device differently.
- */
-static int __zio_rw_control(char *path, struct zio_control * ctrl, int flags)
+/* Generic read/write for the current control attribute */
+static int __zio_rw_control(struct sysfs_attr *attr, struct zio_control * ctrl, int flags)
 {
 	int i, err = 0;
 
-	i = __zio_rw_attribute(path, flags, ctrl, ZIO_CONTROL_SIZE);
+	/* Only current_control attribute can use this function */
+	if (strcmp(attr->name, "current_control"))
+		return -1;
+	if (flags == O_RDONLY)
+		i = sysfs_read_attribute(attr, ctrl, ZIO_CONTROL_SIZE);
+	else
+		i = sysfs_write_attribute(attr, ctrl, ZIO_CONTROL_SIZE);
 	/* Check what happen during file I/O */
 	switch (i) {
 	case -1:
@@ -111,14 +79,30 @@ static int __zio_rw_control(char *path, struct zio_control * ctrl, int flags)
 	return err;
 }
 /* Get the current control of a channel from the binary sysfs attribute */
-inline int zio_read_control(char *path, struct zio_control *ctrl)
+int zio_read_control(struct sysfs_attr *attr, struct zio_control *ctrl)
 {
-	return __zio_rw_control(path, ctrl, O_RDONLY);
-
+	return __zio_rw_control(attr, ctrl, O_RDONLY);
 }
 /* Set the current control of a channel to the binary sysfs attribute */
-inline int zio_write_control(char *path, struct zio_control *ctrl)
+int zio_write_control(struct sysfs_attr *attr, struct zio_control *ctrl)
 {
-	return __zio_rw_control(path, ctrl, O_WRONLY);
+
+	return __zio_rw_control(attr, ctrl, O_WRONLY);
 }
 
+
+/* These function are used to handle the modules to use within a device */
+int zio_get_module(struct sysfs_attr *attr, char *name)
+{
+	if (strcmp(attr->name, "current_trigger") &&
+	    strcmp(attr->name, "current_buffer"))
+		return -1;
+	return sysfs_read_attribute(attr, name, ZATTR_BUF_LEN);
+}
+int zio_set_module(struct sysfs_attr *attr, char *name)
+{
+	if (strcmp(attr->name, "current_trigger") &&
+	    strcmp(attr->name, "current_buffer"))
+		return -1;
+	return sysfs_write_attribute(attr, name, strlen(name));
+}
