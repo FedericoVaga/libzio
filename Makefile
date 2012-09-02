@@ -1,9 +1,17 @@
 ZIO ?= $(HOME)/zio
 
-OBJ := libzattr.o libzio.o
+OBJ := libzattr.o libzio.o libsysfs.o
 
 libzio.a: $(OBJ)
-	gcc -o "$@" $(OBJ)
+	ar rcs libzio.a $(OBJ)
 
 %.o: %.c libzio.h
 	gcc -I$(ZIO)/include -c -o "$@" "$<"
+	
+libsysfs.o: libsysfs.c libsysfs.h
+	gcc -c -o "$@" "$<"
+	
+clean:
+	rm $(OBJ)
+
+.PHONY: clean

@@ -3,6 +3,19 @@ ZIO devices. The libzio library is made of the following files:
 - libzattr.c
 - libzio.c
 
+libsysfs.c libsysfs.h ---------------------------------------------------------
+This is a little library to handle the sysfs in a way usefull for ZIO. I think
+it can be useful also for a generic program which need to handle with some
+sysfs directory; but, it is _not_ my intention to create a sysfs library. I
+create this tiny generic library only for my libzio which use sysfs.
+
+Anyway, this library can read/write a sysfs attribute and build the
+sysfs structure from a root directory. This is useful for ZIO because:
+- ZIO use sysfs to export device registers/parameters, so user must read/write
+  sysfs attribute
+- ZIO organize its device on 3 sub-directory level. With the build tree
+  function you can reproduce the ZIO device organization
+
 
 libzattr.c --------------------------------------------------------------------
 Within this file there are the function to read and write ZIO attributes.
