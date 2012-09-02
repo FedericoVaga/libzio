@@ -1,5 +1,8 @@
+[WARNING: This library is untested!!!]
+
 The main purpose of the libzio library is to make an easy API to handle
 ZIO devices. The libzio library is made of the following files:
+- libsysfs.c and libsysfs.h
 - libzattr.c
 - libzio.c
 
