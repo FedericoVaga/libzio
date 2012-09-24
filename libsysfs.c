@@ -10,8 +10,9 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <dirent.h>
-#include <unistd.h>
 #include <sys/types.h>
+#include <sys/stat.h>
+
 
 #include "libsysfs.h"
 
@@ -109,9 +110,10 @@ struct sysfs_dir *sysfs_build_directory_tree(char *pathto, char *name)
 	struct sysfs_dir *dir;
 	struct dirent *ep, **namelist;
 	struct stat st;
-	int n, i, a, d;
+	int n, i, a, d, err;
+	char tmp[200];
 
-	dir = malloc(sizeof(struct sysfs_dir));
+	dir = calloc(1, sizeof(struct sysfs_dir));
 	if (!dir)
 		return NULL;
 	dir->name = malloc(strlen(name));
@@ -122,33 +124,40 @@ struct sysfs_dir *sysfs_build_directory_tree(char *pathto, char *name)
 	if (!dir->path)
 		goto out_path;
 	sprintf(dir->path, "%s/%s", pathto, name);
-
 	n = scandir(dir->path, &namelist, 0, alphasort);
 	if (n < 0)
 		goto out_scan;
 	/* Count attributes and directory */
 	for (i = 0; i < n; ++i) {
-		stat(namelist[i]->d_name, &st);
-		if (IS_DIR(st.st_mode)) {
-			if (IS_LINK(st.st_mode))
+		if (!strcmp(namelist[i]->d_name, ".") || !strcmp(namelist[i]->d_name, ".."))
+			continue;
+		sprintf(tmp, "%s/%s", dir->path, namelist[i]->d_name);
+		err = lstat(tmp, &st);
+		if (S_ISDIR(st.st_mode)) {
+			if (S_ISLNK(st.st_mode))
 				continue;
 			dir->n_sub_dir++;
 		} else {
+			if (S_ISLNK(st.st_mode))
+				continue;
 			dir->n_attr++;
 		}
 	}
 	/* Allocate */
-	dir->attr = malloc(sizeof(struct sysfs_attr *) * dir->n_attr);
+	dir->attr = calloc(dir->n_attr, sizeof(struct sysfs_attr *));
 	if (!dir->attr)
 		goto out_attr;
-	dir->sub_dir = malloc(sizeof(struct sysfs_dir *) * dir->n_attr);
+	dir->sub_dir = calloc(dir->n_attr, sizeof(struct sysfs_dir *));
 	if (!dir->sub_dir)
 		goto out_dir;
 	/* Fill directory */
 	for (i = 0, a = 0, d = 0; i < n; ++i) {
-		stat(namelist[i]->d_name, &st);
-		if (IS_DIR(st.st_mode)) {
-			if (IS_LINK(st.st_mode))
+		if (!strcmp(namelist[i]->d_name, ".") || !strcmp(namelist[i]->d_name, ".."))
+			continue;
+		sprintf(tmp, "%s/%s", dir->path, namelist[i]->d_name);
+		lstat(tmp, &st);
+		if (S_ISDIR(st.st_mode)) {
+			if (S_ISLNK(st.st_mode))
 				continue;
 			dir->sub_dir[d] = sysfs_build_directory_tree(dir->path,
 							  namelist[i]->d_name);
@@ -156,6 +165,8 @@ struct sysfs_dir *sysfs_build_directory_tree(char *pathto, char *name)
 				goto out_fill;
 			d++;
 		} else {
+			if (S_ISLNK(st.st_mode))
+				continue;
 			dir->attr[a] = _sysfs_create_attr(dir,
 							  namelist[i]->d_name,
 							  st.st_mode);
@@ -164,11 +175,9 @@ struct sysfs_dir *sysfs_build_directory_tree(char *pathto, char *name)
 			a++;
 		}
 	}
-
 	for (i = 0; i < n; ++i)
 		free(namelist[i]);
 	free(namelist);
-
 	return dir;
 
 out_fill:
