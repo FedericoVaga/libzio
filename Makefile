@@ -7,10 +7,10 @@ libzio.a: $(OBJ)
 
 %.o: %.c libzio.h
 	gcc -I$(ZIO)/include -c -o "$@" "$<"
-	
+
 libsysfs.o: libsysfs.c libsysfs.h
 	gcc -c -o "$@" "$<"
-	
+
 clean:
 	rm $(OBJ) libzio.a
 
