@@ -17,7 +17,7 @@
 #define ZATTR_BUF_LEN 50
 
 /* The function read the value of the ZIO sysfs attribute */
-int zio_read_attribute(struct sysfs_attr *attr, uint32_t *value)
+int zio_attr_read(struct sysfs_attr *attr, uint32_t *value)
 {
 	char buf[ZATTR_BUF_LEN];
 	int i;
@@ -32,7 +32,7 @@ int zio_read_attribute(struct sysfs_attr *attr, uint32_t *value)
 	return 0;
 }
 /* Set the value to the zio attribute */
-int zio_write_attribute(struct sysfs_attr *attr, uint32_t value)
+int zio_attr_write(struct sysfs_attr *attr, uint32_t value)
 {
 	char buf[ZATTR_BUF_LEN];
 	int i;
@@ -48,7 +48,7 @@ int zio_write_attribute(struct sysfs_attr *attr, uint32_t value)
 }
 
 /* Generic read/write for the current control attribute */
-static int __zio_rw_control(struct sysfs_attr *attr, struct zio_control * ctrl, int flags)
+static int __zio_ctrl_rw(struct sysfs_attr *attr, struct zio_control * ctrl, int flags)
 {
 	int i, err = 0;
 
@@ -79,15 +79,15 @@ static int __zio_rw_control(struct sysfs_attr *attr, struct zio_control * ctrl, 
 	return err;
 }
 /* Get the current control of a channel from the binary sysfs attribute */
-int zio_read_control(struct sysfs_attr *attr, struct zio_control *ctrl)
+int zio_ctrl_read(struct sysfs_attr *attr, struct zio_control *ctrl)
 {
-	return __zio_rw_control(attr, ctrl, O_RDONLY);
+	return __zio_ctrl_rw(attr, ctrl, O_RDONLY);
 }
 /* Set the current control of a channel to the binary sysfs attribute */
-int zio_write_control(struct sysfs_attr *attr, struct zio_control *ctrl)
+int zio_ctrl_write(struct sysfs_attr *attr, struct zio_control *ctrl)
 {
 
-	return __zio_rw_control(attr, ctrl, O_WRONLY);
+	return __zio_ctrl_rw(attr, ctrl, O_WRONLY);
 }
 
 

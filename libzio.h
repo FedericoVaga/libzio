@@ -23,10 +23,10 @@ struct zio_object {
 };
 
 /* libzattr.c */
-extern int zio_read_attribute(struct sysfs_attr *attr, uint32_t *value);
-extern int zio_write_attribute(struct sysfs_attr *attr, uint32_t value);
-extern int zio_read_control(struct sysfs_attr *attr, struct zio_control *ctrl);
-extern int zio_write_control(struct sysfs_attr *attr, struct zio_control *ctrl);
+extern int zio_attr_read(struct sysfs_attr *attr, uint32_t *value);
+extern int zio_attr_write(struct sysfs_attr *attr, uint32_t value);
+extern int zio_ctrl_read(struct sysfs_attr *attr, struct zio_control *ctrl);
+extern int zio_ctrl_write(struct sysfs_attr *attr, struct zio_control *ctrl);
 extern int zio_get_module(struct sysfs_attr *attr, char *name);
 extern int zio_set_module(struct sysfs_attr *attr, char *name);
 
