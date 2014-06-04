@@ -56,9 +56,9 @@ static int __zio_ctrl_rw(struct sysfs_attr *attr, struct zio_control * ctrl, int
 	if (strcmp(attr->name, "current_control"))
 		return -1;
 	if (flags == O_RDONLY)
-		i = sysfs_read_attribute(attr, ctrl, ZIO_CONTROL_SIZE);
+		i = sysfs_read_attribute(attr, ctrl, __ZIO_CONTROL_SIZE);
 	else
-		i = sysfs_write_attribute(attr, ctrl, ZIO_CONTROL_SIZE);
+		i = sysfs_write_attribute(attr, ctrl, __ZIO_CONTROL_SIZE);
 	/* Check what happen during file I/O */
 	switch (i) {
 	case -1:
@@ -71,9 +71,9 @@ static int __zio_ctrl_rw(struct sysfs_attr *attr, struct zio_control * ctrl, int
 		break;
 	default: /* FIXME usefull only for control */
 		fprintf(stderr, "File I/O warn: %i bytes (expected %i)\n",
-			i, ZIO_CONTROL_SIZE);
+			i, __ZIO_CONTROL_SIZE);
 		/* continue anyways */
-	case ZIO_CONTROL_SIZE:
+	case __ZIO_CONTROL_SIZE:
 		break; /* ok */
 	}
 	return err;
