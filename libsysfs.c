@@ -16,40 +16,48 @@
 
 #include "libsysfs.h"
 
+int sysfs_attr_read(char *path, void *buf, size_t len)
+{
+	int fd, i;
+
+	fd = open(path, O_RDONLY);
+	if (fd < 0)
+		return -1;
+	i = read(fd, buf, len);
+	close(fd);
+	return i;
+}
+
+int sysfs_attr_write(char *path, void *buf, size_t len)
+{
+	int fd, i;
+
+	fd = open(path, O_WRONLY);
+	if (fd < 0)
+		return -1;
+	i = read(fd, buf, len);
+	close(fd);
+	return i;
+}
+
 
 int sysfs_read_attribute(struct sysfs_attr *attr, void *buf, size_t len)
 {
-	int fd, i;
 
 	if (!(attr->md & (S_IRUSR | S_IRGRP | S_IROTH))) {
 		errno = EPERM;
 		return -1;
 	}
-	/* Open the sysfs attribute */
-	fd = open(attr->path, O_RDONLY);
-	if (fd < 0)
-		return -1;
-	i = read(fd, buf, len);
-	/* Close the sysfs attribute */
-	close(fd);
-	return i;
+	return sysfs_attr_read(attr->path, buf, len);
 }
+
 int sysfs_write_attribute(struct sysfs_attr *attr, void *buf, size_t len)
 {
-	int fd, i;
-
 	if (!(attr->md & (S_IWUSR | S_IWGRP | S_IWOTH))) {
 		errno = EPERM;
 		return -1;
 	}
-	/* Open the sysfs attribute */
-	fd = open(attr->path, O_WRONLY);
-	if (fd < 0)
-		return -1;
-	i = read(fd, buf, len);
-	/* Close the sysfs attribute */
-	close(fd);
-	return i;
+	return sysfs_attr_write(attr->path, buf, len);
 }
 
 
