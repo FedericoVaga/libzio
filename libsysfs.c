@@ -85,7 +85,7 @@ static struct sysfs_attr *_sysfs_create_attr(struct sysfs_dir *dir,
 
 	/* Copy path ( +1 for the slash +1 for terminator) */
 	attr->path = malloc(strlen(attr->name) + strlen(dir->path) + 2);
-	if (!attr->name)
+	if (!attr->path)
 		goto out;
 	sprintf(attr->path, "%s/%s", dir->path, attr->name);
 
@@ -155,11 +155,13 @@ struct sysfs_dir *sysfs_build_directory_tree(char *pathto, char *name)
 	dir->attr = calloc(dir->n_attr, sizeof(struct sysfs_attr *));
 	if (!dir->attr)
 		goto out_attr;
-	dir->sub_dir = calloc(dir->n_attr, sizeof(struct sysfs_dir *));
+	dir->sub_dir = calloc(dir->n_sub_dir, sizeof(struct sysfs_dir *));
 	if (!dir->sub_dir)
 		goto out_dir;
 	/* Fill directory */
-	for (i = 0, a = 0, d = 0; i < n; ++i) {
+	for (i = 0, a = 0, d = 0;
+	     i < n, a < dir->n_attr, d < dir->n_sub_dir;
+	     ++i) {
 		if (!strcmp(namelist[i]->d_name, ".") || !strcmp(namelist[i]->d_name, ".."))
 			continue;
 		sprintf(tmp, "%s/%s", dir->path, namelist[i]->d_name);
@@ -189,9 +191,9 @@ struct sysfs_dir *sysfs_build_directory_tree(char *pathto, char *name)
 	return dir;
 
 out_fill:
-	while(a--)
+	while(--a)
 		_sysfs_destroy_attr(dir->attr[a]);
-	while(d--)
+	while(--d)
 		free(dir->sub_dir[d]);
 
 	free(dir->sub_dir);
