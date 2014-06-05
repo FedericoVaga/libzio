@@ -124,20 +124,30 @@ struct sysfs_dir *sysfs_build_directory_tree(char *pathto, char *name)
 	dir = calloc(1, sizeof(struct sysfs_dir));
 	if (!dir)
 		return NULL;
+
+	/* Store directory name */
 	dir->name = malloc(strlen(name));
 	if (!dir->name)
 		goto out;
 	strcpy(dir->name, name);
+
+	/* Store full path to directory */
 	dir->path = malloc(strlen(pathto) + strlen(name) + 2);
 	if (!dir->path)
 		goto out_path;
 	sprintf(dir->path, "%s/%s", pathto, name);
+
+	/*
+	 * Inspect the directory for attributes and sub-directories. Then,
+	 * count attributes and sub-direcotries.
+	 * (skip link and '.' '..')
+	 */
 	n = scandir(dir->path, &namelist, 0, alphasort);
 	if (n < 0)
 		goto out_scan;
-	/* Count attributes and directory */
 	for (i = 0; i < n; ++i) {
-		if (!strcmp(namelist[i]->d_name, ".") || !strcmp(namelist[i]->d_name, ".."))
+		if (!strcmp(namelist[i]->d_name, ".") ||
+		    !strcmp(namelist[i]->d_name, ".."))
 			continue;
 		sprintf(tmp, "%s/%s", dir->path, namelist[i]->d_name);
 		err = lstat(tmp, &st);
@@ -151,18 +161,21 @@ struct sysfs_dir *sysfs_build_directory_tree(char *pathto, char *name)
 			dir->n_attr++;
 		}
 	}
-	/* Allocate */
+
+	/* Allocate new attributes and directories  */
 	dir->attr = calloc(dir->n_attr, sizeof(struct sysfs_attr *));
 	if (!dir->attr)
 		goto out_attr;
 	dir->sub_dir = calloc(dir->n_sub_dir, sizeof(struct sysfs_dir *));
 	if (!dir->sub_dir)
 		goto out_dir;
-	/* Fill directory */
+
+	/* Fill directory with attributes and sub-directories */
 	for (i = 0, a = 0, d = 0;
 	     i < n, a < dir->n_attr, d < dir->n_sub_dir;
 	     ++i) {
-		if (!strcmp(namelist[i]->d_name, ".") || !strcmp(namelist[i]->d_name, ".."))
+		if (!strcmp(namelist[i]->d_name, ".") ||
+		    !strcmp(namelist[i]->d_name, ".."))
 			continue;
 		sprintf(tmp, "%s/%s", dir->path, namelist[i]->d_name);
 		lstat(tmp, &st);
