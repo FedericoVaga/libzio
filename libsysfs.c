@@ -151,15 +151,14 @@ struct sysfs_dir *sysfs_build_directory_tree(char *pathto, char *name)
 			continue;
 		sprintf(tmp, "%s/%s", dir->path, namelist[i]->d_name);
 		err = lstat(tmp, &st);
-		if (S_ISDIR(st.st_mode)) {
-			if (S_ISLNK(st.st_mode))
-				continue;
+		if (err < 0)
+			goto out_count;
+		if (S_ISLNK(st.st_mode))
+			continue;
+		if (S_ISDIR(st.st_mode))
 			dir->n_sub_dir++;
-		} else {
-			if (S_ISLNK(st.st_mode))
-				continue;
+		else
 			dir->n_attr++;
-		}
 	}
 
 	/* Allocate new attributes and directories  */
@@ -178,18 +177,18 @@ struct sysfs_dir *sysfs_build_directory_tree(char *pathto, char *name)
 		    !strcmp(namelist[i]->d_name, ".."))
 			continue;
 		sprintf(tmp, "%s/%s", dir->path, namelist[i]->d_name);
-		lstat(tmp, &st);
+		err = lstat(tmp, &st);
+		if (err < 0)
+			goto out_fill;
+		if (S_ISLNK(st.st_mode))
+			continue;
 		if (S_ISDIR(st.st_mode)) {
-			if (S_ISLNK(st.st_mode))
-				continue;
 			dir->sub_dir[d] = sysfs_build_directory_tree(dir->path,
 							  namelist[i]->d_name);
 			if (!dir->sub_dir[d])
 				goto out_fill;
 			d++;
 		} else {
-			if (S_ISLNK(st.st_mode))
-				continue;
 			dir->attr[a] = _sysfs_create_attr(dir,
 							  namelist[i]->d_name,
 							  st.st_mode);
@@ -212,6 +211,7 @@ out_fill:
 	free(dir->sub_dir);
 out_dir:
 	free(dir->attr);
+out_count:
 out_attr:
 	for (i = 0; i < n; ++i)
 		free(namelist[i]);
