@@ -6,10 +6,10 @@ libzio.a: $(OBJ)
 	ar rcs libzio.a $(OBJ)
 
 %.o: %.c libzio.h
-	gcc -I$(ZIO)/include -c -o "$@" "$<"
+	gcc -I$(ZIO)/include -ggdb -c -o "$@" "$<"
 
 libsysfs.o: libsysfs.c libsysfs.h
-	gcc -c -o "$@" "$<"
+	gcc -ggdb -c -o "$@" "$<"
 
 clean:
 	rm $(OBJ) libzio.a

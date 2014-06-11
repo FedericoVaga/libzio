@@ -16,13 +16,46 @@
 
 #define ZATTR_BUF_LEN 50
 
+int _uzio_attr_read_raw(char *path, void *buf, size_t len)
+{
+	int fd, i;
+	char *str;
+
+	fd = open(path, O_RDONLY);
+	if (fd < 0)
+		return -1;
+	i = read(fd, buf, len);
+	close(fd);
+	str = buf;
+	if (str[i - 1] == '\n')
+		str[i - 1] = '\0';
+	return i;
+}
+
+int _uzio_attr_write_raw(char *path, void *buf, size_t len)
+{
+	int fd, i;
+
+	fd = open(path, O_WRONLY);
+	if (fd < 0)
+		return -1;
+	i = read(fd, buf, len);
+	close(fd);
+	return i;
+}
+
 /* The function read the value of the ZIO sysfs attribute */
-int zio_attr_read(struct sysfs_attr *attr, uint32_t *value)
+int uzio_attr_read(struct zio_attr *attr, uint32_t *value)
 {
 	char buf[ZATTR_BUF_LEN];
 	int i;
 
-	i = sysfs_read_attribute(attr, buf, ZATTR_BUF_LEN);
+	if (!(attr->md & (S_IRUSR | S_IRGRP | S_IROTH))) {
+		errno = EPERM;
+		return -1;
+	}
+
+	i = _uzio_attr_read_raw(attr->path, buf, ZATTR_BUF_LEN);
 	/* Read attribute */
 	if (i <=0 )
 		return -1;
@@ -32,15 +65,20 @@ int zio_attr_read(struct sysfs_attr *attr, uint32_t *value)
 	return 0;
 }
 /* Set the value to the zio attribute */
-int zio_attr_write(struct sysfs_attr *attr, uint32_t value)
+int uzio_attr_write(struct zio_attr *attr, uint32_t value)
 {
 	char buf[ZATTR_BUF_LEN];
 	int i;
 
+	if (!(attr->md & (S_IWUSR | S_IWGRP | S_IWOTH))) {
+		errno = EPERM;
+		return -1;
+	}
+
 	/* Convert the value to an ASCII string */
 	sprintf(buf, "%d", value);
-	/* Write attribute */
-	i = sysfs_write_attribute(attr, buf, ZATTR_BUF_LEN);
+	/* Write attribute */	
+	i = _uzio_attr_write_raw(attr->path, buf, ZATTR_BUF_LEN);
 	if (i)
 		return -1;
 
@@ -56,9 +94,9 @@ static int __zio_ctrl_rw(struct sysfs_attr *attr, struct zio_control * ctrl, int
 	if (strcmp(attr->name, "current_control"))
 		return -1;
 	if (flags == O_RDONLY)
-		i = sysfs_read_attribute(attr, ctrl, __ZIO_CONTROL_SIZE);
+		i = _uzio_attr_read_raw(attr->path, ctrl, __ZIO_CONTROL_SIZE);
 	else
-		i = sysfs_write_attribute(attr, ctrl, __ZIO_CONTROL_SIZE);
+		i = _uzio_attr_write_raw(attr->path, ctrl, __ZIO_CONTROL_SIZE);
 	/* Check what happen during file I/O */
 	switch (i) {
 	case -1:
@@ -79,12 +117,12 @@ static int __zio_ctrl_rw(struct sysfs_attr *attr, struct zio_control * ctrl, int
 	return err;
 }
 /* Get the current control of a channel from the binary sysfs attribute */
-int zio_ctrl_read(struct sysfs_attr *attr, struct zio_control *ctrl)
+int uzio_ctrl_read(struct zio_attr *attr, struct zio_control *ctrl)
 {
 	return __zio_ctrl_rw(attr, ctrl, O_RDONLY);
 }
 /* Set the current control of a channel to the binary sysfs attribute */
-int zio_ctrl_write(struct sysfs_attr *attr, struct zio_control *ctrl)
+int uzio_ctrl_write(struct zio_attr *attr, struct zio_control *ctrl)
 {
 
 	return __zio_ctrl_rw(attr, ctrl, O_WRONLY);
@@ -92,17 +130,17 @@ int zio_ctrl_write(struct sysfs_attr *attr, struct zio_control *ctrl)
 
 
 /* These function are used to handle the modules to use within a device */
-int zio_get_module(struct sysfs_attr *attr, char *name)
+/*int uzio_get_module(struct zio_attr *attr, char *name)
 {
 	if (strcmp(attr->name, "current_trigger") &&
 	    strcmp(attr->name, "current_buffer"))
 		return -1;
-	return sysfs_read_attribute(attr, name, ZATTR_BUF_LEN);
+	return _uzio_attr_read_raw(attr->path, name, ZATTR_BUF_LEN);
 }
-int zio_set_module(struct sysfs_attr *attr, char *name)
+int uzio_set_module(struct zio_attr *attr, char *name)
 {
 	if (strcmp(attr->name, "current_trigger") &&
 	    strcmp(attr->name, "current_buffer"))
 		return -1;
-	return sysfs_write_attribute(attr, name, strlen(name));
-}
+	return _uzio_attr_write_raw(attr->path, name, strlen(name));
+	}*/

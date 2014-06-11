@@ -10,6 +10,8 @@
 
 #include <sys/types.h>
 
+#define ENOZDEV 210000
+
 struct sysfs_attr {
 	char *name;		/* file name */
 	char *path;		/* full path to the attribute */

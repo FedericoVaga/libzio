@@ -19,12 +19,16 @@
 int sysfs_attr_read(char *path, void *buf, size_t len)
 {
 	int fd, i;
+	char *str;
 
 	fd = open(path, O_RDONLY);
 	if (fd < 0)
 		return -1;
 	i = read(fd, buf, len);
 	close(fd);
+	str = buf;
+	if (str[i - 1] == '\n')
+		str[i - 1] = '\0';
 	return i;
 }
 
@@ -113,7 +117,8 @@ void sysfs_destroy_directory_tree(struct sysfs_dir *dir)
 	free(dir);
 }
 /* Build a directory tree */
-struct sysfs_dir *sysfs_build_directory_tree(char *pathto, char *name)
+struct sysfs_dir *__sysfs_build_directory_tree(char *pathto, char *name,
+					       int rec)
 {
 	struct sysfs_dir *dir;
 	struct dirent *ep, **namelist;
@@ -121,9 +126,16 @@ struct sysfs_dir *sysfs_build_directory_tree(char *pathto, char *name)
 	int n, i, a, d, err;
 	char tmp[200];
 
-	dir = calloc(1, sizeof(struct sysfs_dir));
+	/* The ZIO hierarchy has 4 levels */
+	if (rec > 3) {
+		errno = ENOZDEV;
+		return NULL;
+	}
+
+	dir = malloc(sizeof(struct sysfs_dir));
 	if (!dir)
 		return NULL;
+	memset(dir, 0, sizeof(struct sysfs_dir));	
 
 	/* Store directory name */
 	dir->name = malloc(strlen(name));
@@ -168,46 +180,59 @@ struct sysfs_dir *sysfs_build_directory_tree(char *pathto, char *name)
 	dir->sub_dir = calloc(dir->n_sub_dir, sizeof(struct sysfs_dir *));
 	if (!dir->sub_dir)
 		goto out_dir;
-
+	
 	/* Fill directory with attributes and sub-directories */
-	for (i = 0, a = 0, d = 0;
-	     i < n, a < dir->n_attr, d < dir->n_sub_dir;
-	     ++i) {
+	for (i = 0, a = 0, d = 0; i < n; ++i) {
 		if (!strcmp(namelist[i]->d_name, ".") ||
 		    !strcmp(namelist[i]->d_name, ".."))
 			continue;
+
 		sprintf(tmp, "%s/%s", dir->path, namelist[i]->d_name);
 		err = lstat(tmp, &st);
 		if (err < 0)
 			goto out_fill;
+
 		if (S_ISLNK(st.st_mode))
 			continue;
+
 		if (S_ISDIR(st.st_mode)) {
-			dir->sub_dir[d] = sysfs_build_directory_tree(dir->path,
-							  namelist[i]->d_name);
-			if (!dir->sub_dir[d])
+			if (d >= dir->n_sub_dir)
+				continue;
+
+			dir->sub_dir[d] = __sysfs_build_directory_tree(
+				dir->path, namelist[i]->d_name, rec + 1);
+
+			if (!dir->sub_dir[d]) {
+				if (errno == ENOZDEV)
+					continue;
 				goto out_fill;
+			}
 			d++;
 		} else {
+			if (a >= dir->n_attr)
+				continue;
 			dir->attr[a] = _sysfs_create_attr(dir,
 							  namelist[i]->d_name,
 							  st.st_mode);
 			if (!dir->attr[a])
 				goto out_fill;
 			a++;
+
 		}
 	}
+#if 0
 	for (i = 0; i < n; ++i)
 		free(namelist[i]);
 	free(namelist);
+#endif
+
 	return dir;
 
 out_fill:
-	while(--a)
+	while(--a >= 0)
 		_sysfs_destroy_attr(dir->attr[a]);
-	while(--d)
-		free(dir->sub_dir[d]);
-
+	while(--d >= 0)
+		sysfs_destroy_directory_tree(dir->sub_dir[d]);
 	free(dir->sub_dir);
 out_dir:
 	free(dir->attr);
@@ -223,4 +248,10 @@ out_path:
 out:
 	free(dir);
 	return NULL;
+}
+
+
+struct sysfs_dir *sysfs_build_directory_tree(char *pathto, char *name)
+{
+	return __sysfs_build_directory_tree(pathto, name, 0);
 }
