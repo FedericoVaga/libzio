@@ -12,7 +12,6 @@
 #include <linux/zio-user.h>
 
 #include "libzio.h"
-#include "libsysfs.h"
 
 #define ZATTR_BUF_LEN 50
 
@@ -86,7 +85,7 @@ int uzio_attr_write(struct zio_attr *attr, uint32_t value)
 }
 
 /* Generic read/write for the current control attribute */
-static int __zio_ctrl_rw(struct sysfs_attr *attr, struct zio_control * ctrl, int flags)
+static int __zio_ctrl_rw(struct zio_attr *attr, struct zio_control * ctrl, int flags)
 {
 	int i, err = 0;
 
@@ -122,7 +121,7 @@ int uzio_ctrl_read(struct zio_attr *attr, struct zio_control *ctrl)
 	return __zio_ctrl_rw(attr, ctrl, O_RDONLY);
 }
 /* Set the current control of a channel to the binary sysfs attribute */
-int uzio_ctrl_write(struct zio_attr *attr, struct zio_control *ctrl)
+int zio_ctrl_write(struct zio_attr *attr, struct zio_control *ctrl)
 {
 
 	return __zio_ctrl_rw(attr, ctrl, O_WRONLY);

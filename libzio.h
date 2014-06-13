@@ -7,7 +7,6 @@
 
 #include <stdint.h>
 #include <linux/zio-user.h>
-#include "libsysfs.h"
 
 #define ZIO_DIR "/sys/bus/zio"
 #define ZIO_DIR_DEV ZIO_DIR"/devices"

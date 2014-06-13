@@ -65,6 +65,7 @@ static int __zio_obj_get_devpath(char *obj_path, char *devname)
 	return 0;
 }
 
+
 static int is_zio_object(char *obj_path, enum zio_object_type type)
 {
 	char path[128], tmp[64];
