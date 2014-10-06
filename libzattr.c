@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2012 Federico Vaga
+ * Author: Federico Vaga <federico.vaga@gmail.com>
+ * License: GPL v3
+ */
 
 #include <stdio.h>
 #include <stdint.h>

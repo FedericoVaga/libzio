@@ -1,5 +1,7 @@
 /*
- * Copyright 2012 Federico Vaga <federico.vaga@gmail.com>
+ * Copyright (c) 2012 Federico Vaga
+ * Author: Federico Vaga <federico.vaga@gmail.com>
+ * License: GPL v3
  */
 
 #ifndef ZIO_DEVICE_H_
