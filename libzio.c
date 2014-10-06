@@ -8,7 +8,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <string.h>                                                             
+#include <string.h>
 #include <errno.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -123,7 +123,7 @@ static int _uzio_fill_attr(FILE *f, struct zio_attr_set *zattr_set)
 			zattr_set->attr[i].type = ZIO_ATTR_TYPE_EXT;
 			break;
 		}
-		
+
 		snprintf(zattr_set->attr[i].path, UZIO_MAX_PATH_LEN ,"%s/%s",
 			zio_dev_dir, relpath);
 		zattr_set->attr[i].name = basename(zattr_set->attr[i].path);
@@ -199,7 +199,7 @@ struct uzio_device *uzio_device_create(char *name)
 		err = uzio_cset_trg_type_update(ucset);
 		if (err)
 			goto out_trg_type;
-		
+
 		err = uzio_cset_buf_type_update(ucset);
 		if (err)
 			goto out_buf_type;
@@ -252,7 +252,7 @@ struct uzio_device *uzio_device_create(char *name)
 		goto out_alloc_dva;
 	for (i = 0; i < uzdev->n_ucset; ++i) {
 		struct uzio_cset *ucset = &uzdev->ucset[i];
-		
+
 		err = _uzio_alloc_attr(f, &ucset->uzattr_set);
 		if (err)
 			goto out_alloc_csa;
@@ -264,11 +264,11 @@ struct uzio_device *uzio_device_create(char *name)
 
 		for (k = 0; k < ucset->n_uchan; ++k) {
 			struct uzio_channel *uchan = &ucset->uchan[k];
-			
+
 			err = _uzio_alloc_attr(f, &uchan->uzattr_set);
 			if (err)
 				goto out_alloc_cha;
-			
+
 			err = _uzio_alloc_attr(f, &uchan->bi.uzattr_set);
 			if (err)
 				goto out_alloc_bia;

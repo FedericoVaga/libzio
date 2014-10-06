@@ -81,7 +81,7 @@ int uzio_attr_write(struct zio_attr *attr, uint32_t value)
 
 	/* Convert the value to an ASCII string */
 	sprintf(buf, "%d", value);
-	/* Write attribute */	
+	/* Write attribute */
 	i = _uzio_attr_write_raw(attr->path, buf, ZATTR_BUF_LEN);
 	if (i)
 		return -1;

@@ -28,12 +28,12 @@ extern const char *zio_dev_dir;
 #define UZIO_FLAG_INTERLEAVE (1 << 0)
 
 
-enum zio_object_type {                                                     
-	ZIO_NONE = 0,   /* reserved for non zio object */                  
-	ZIO_DEV, ZIO_CSET, ZIO_CHAN,                                       
-	ZIO_TRG, ZIO_TI, /* trigger and trigger instance */                
-	ZIO_BUF, ZIO_BI, /* buffer and buffer instance */                  
-};  
+enum zio_object_type {
+	ZIO_NONE = 0,   /* reserved for non zio object */
+	ZIO_DEV, ZIO_CSET, ZIO_CHAN,
+	ZIO_TRG, ZIO_TI, /* trigger and trigger instance */
+	ZIO_BUF, ZIO_BI, /* buffer and buffer instance */
+};
 
 enum zio_attr_type {
 	ZIO_ATTR_TYPE_STD,
